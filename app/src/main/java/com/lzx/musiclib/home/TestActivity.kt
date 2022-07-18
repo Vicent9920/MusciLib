@@ -102,7 +102,7 @@ open class TestActivity : AppCompatActivity() {
         soundPoolList.add("hglo8.ogg")
 
         val m3u8 = mutableListOf<Pair<String, String>>()
-        m3u8.add(Pair("听故事", "https://joris-test.oss-cn-shanghai.aliyuncs.com/AudioTest/audiotest.m3u8"))
+        m3u8.add(Pair("CRI汉语环球", "http://sk.cri.cn/hyhq.m3u8"))
         m3u8.add(Pair("CRI环球资讯", "http://sk.cri.cn/nhzs.m3u8"))
         m3u8.add(Pair("CRI劲曲调频", "http://sk.cri.cn/887.m3u8"))
         m3u8.add(Pair("CRI怀旧金曲", "http://sk.cri.cn/oldies.m3u8"))

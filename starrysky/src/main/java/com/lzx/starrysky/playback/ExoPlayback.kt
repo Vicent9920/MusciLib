@@ -3,6 +3,7 @@ package com.lzx.starrysky.playback
 import android.content.Context
 import android.net.Uri
 import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.DefaultRenderersFactory.ExtensionRendererMode
 import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.ext.rtmp.RtmpDataSourceFactory
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
@@ -13,9 +14,11 @@ import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.source.rtsp.RtspMediaSource
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector.ParametersBuilder
 import com.google.android.exoplayer2.upstream.DataSource
-import com.google.android.exoplayer2.upstream.DefaultDataSource
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.upstream.cache.Cache
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import com.google.android.exoplayer2.util.Util
@@ -23,7 +26,6 @@ import com.lzx.starrysky.SongInfo
 import com.lzx.starrysky.StarrySky
 import com.lzx.starrysky.cache.ExoCache
 import com.lzx.starrysky.cache.ICache
-import com.lzx.starrysky.decrypt.DefaultFilePlaylistParserFactory
 import com.lzx.starrysky.playback.Playback.Companion.STATE_BUFFERING
 import com.lzx.starrysky.playback.Playback.Companion.STATE_ERROR
 import com.lzx.starrysky.playback.Playback.Companion.STATE_IDLE
@@ -49,7 +51,7 @@ class ExoPlayback(
     }
 
     private var dataSourceFactory: DataSource.Factory? = null
-    private var player: ExoPlayer? = null
+    private var player: SimpleExoPlayer? = null
     private var mediaSource: MediaSource? = null
     private var trackSelector: DefaultTrackSelector? = null
     private var trackSelectorParameters: DefaultTrackSelector.Parameters? = null
@@ -188,18 +190,59 @@ class ExoPlayback(
     @Synchronized
     private fun createMediaSource(source: String): MediaSource {
         val uri = Uri.parse(source)
-        val type = C.CONTENT_TYPE_HLS
+        val isRtmpSource = source.isRTMP()
+        val isFlacSource = source.isFLAC()
+        val type = when {
+            isRtmpSource -> TYPE_RTMP
+            isFlacSource -> TYPE_FLAC
+            else -> Util.inferContentType(uri, null)
+
+        }
         dataSourceFactory = buildDataSourceFactory(type)
         return when (type) {
-
-            C.CONTENT_TYPE_HLS -> {
+            C.TYPE_DASH -> {
+                if ("source.dash.DashMediaSource".hasMediaSource()) {
+                    return DashMediaSource.Factory(dataSourceFactory!!).createMediaSource(MediaItem.fromUri(uri))
+                } else {
+                    throw IllegalStateException("has not DashMediaSource")
+                }
+            }
+            C.TYPE_SS -> {
+                if ("source.smoothstreaming.SsMediaSource".hasMediaSource()) {
+                    return SsMediaSource.Factory(dataSourceFactory!!).createMediaSource(MediaItem.fromUri(uri))
+                } else {
+                    throw IllegalStateException("has not SsMediaSource")
+                }
+            }
+            C.TYPE_HLS -> {
                 if ("source.hls.HlsMediaSource".hasMediaSource()) {
-                    return HlsMediaSource.Factory(dataSourceFactory!!)
-                        .setPlaylistParserFactory(DefaultFilePlaylistParserFactory())
-                        .createMediaSource(MediaItem.fromUri(uri))
+                    return HlsMediaSource.Factory(dataSourceFactory!!).createMediaSource(MediaItem.fromUri(uri))
                 } else {
                     throw IllegalStateException("has not HlsMediaSource")
                 }
+            }
+            C.TYPE_RTSP -> {
+                if ("source.rtsp.RtspMediaSource".hasMediaSource()) {
+                    return RtspMediaSource.Factory().createMediaSource(MediaItem.fromUri(uri))
+                } else {
+                    throw IllegalStateException("has not RtspMediaSource")
+                }
+            }
+            C.TYPE_OTHER -> {
+                ProgressiveMediaSource.Factory(dataSourceFactory!!).createMediaSource(MediaItem.fromUri(uri))
+            }
+            TYPE_RTMP -> {
+                if ("ext.rtmp.RtmpDataSourceFactory".hasMediaSource()) {
+                    val factory = RtmpDataSourceFactory()
+                    return ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(uri))
+                } else {
+                    throw IllegalStateException("has not RtmpDataSourceFactory")
+                }
+            }
+            TYPE_FLAC -> {
+                val extractorsFactory = DefaultExtractorsFactory()
+                ProgressiveMediaSource.Factory(dataSourceFactory!!, extractorsFactory)
+                    .createMediaSource(MediaItem.fromUri(uri))
             }
             else -> throw IllegalStateException("Unsupported type: $type")
         }
@@ -208,15 +251,17 @@ class ExoPlayback(
     @Synchronized
     private fun createExoPlayer() {
         if (player == null) {
-             val extensionRendererMode = DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+            @ExtensionRendererMode val extensionRendererMode = DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
             val renderersFactory = DefaultRenderersFactory(context)
                 .setExtensionRendererMode(extensionRendererMode)
 
-
-            trackSelectorParameters = DefaultTrackSelector.Parameters.Builder(context).build()
+            trackSelectorParameters = ParametersBuilder(context).build()
             trackSelector = DefaultTrackSelector(context)
             trackSelector?.parameters = trackSelectorParameters as DefaultTrackSelector.Parameters
-            player = ExoPlayer.Builder(context,renderersFactory).setTrackSelector(trackSelector!!).build()
+
+            player = SimpleExoPlayer.Builder(context, renderersFactory)
+                .setTrackSelector(trackSelector!!)
+                .build()
 
             player?.addListener(eventListener)
             player?.setAudioAttributes(AudioAttributes.DEFAULT, isAutoManagerFocus)
@@ -228,12 +273,18 @@ class ExoPlayback(
 
     @Synchronized
     private fun buildDataSourceFactory(type: Int): DataSource.Factory? {
-
-
+        val userAgent = Util.getUserAgent(context, "StarrySky")
+        val httpDataSourceFactory = DefaultHttpDataSourceFactory(
+            userAgent,
+            DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS,
+            DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS,
+            true
+        )
         return if (cache?.isOpenCache() == true && cache is ExoCache && !type.isStreamingType()) {
-            buildCacheDataSource(DefaultHttpDataSource.Factory(), cache.getDownloadCache())
+            val upstreamFactory = DefaultDataSourceFactory(context, httpDataSourceFactory)
+            buildCacheDataSource(upstreamFactory, cache.getDownloadCache())
         } else {
-            DefaultDataSource.Factory(context)
+            DefaultDataSourceFactory(context, httpDataSourceFactory)
         }
     }
 
@@ -325,7 +376,7 @@ class ExoPlayback(
         this.callback = callback
     }
 
-    private inner class ExoPlayerEventListener : Player.Listener {
+    private inner class ExoPlayerEventListener : Player.EventListener {
 
         override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
             var newState = STATE_IDLE
@@ -351,17 +402,21 @@ class ExoPlayback(
             }
         }
 
-        override fun onPlayerError(error: PlaybackException) {
+        override fun onPlayerError(error: ExoPlaybackException) {
             error.printStackTrace()
             hasError = true
-            val what = error.errorCodeName
-            if(error.errorCode == PlaybackException.ERROR_CODE_IO_INVALID_HTTP_CONTENT_TYPE) {
+            val what: String = when (error.type) {
+                ExoPlaybackException.TYPE_SOURCE -> error.sourceException.message.toString()
+                ExoPlaybackException.TYPE_RENDERER -> error.rendererException.message.toString()
+                ExoPlaybackException.TYPE_UNEXPECTED -> error.unexpectedException.message.toString()
+                else -> "Unknown: $error"
+            }
+            if (error.type == ExoPlaybackException.TYPE_SOURCE) {
                 sourceTypeErrorInfo.happenSourceError = true
                 sourceTypeErrorInfo.seekToPositionWhenError = sourceTypeErrorInfo.seekToPosition
                 sourceTypeErrorInfo.currPositionWhenError = currentStreamPosition()
             }
             callback?.onPlaybackError(currSongInfo, "ExoPlayer error $what")
-
         }
     }
 
