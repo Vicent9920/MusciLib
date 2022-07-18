@@ -1,0 +1,42 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+
+    <style name="dialog_base_style">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
+    <style name="select_popup_bottom" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/popup_bottom_enter</item>
+        <item name="android:windowExitAnimation">@anim/popup_bottom_exit</item>
+    </style>
+
+    <style name="crollerStyle">
+        <item name="back_circle_color">@color/back_circle_color</item>
+        <item name="back_circle_disable_color">@color/back_circle_disable_color
+        </item>
+        <item name="indicator_color">@color/indicator_color</item>
+        <item name="indicator_disable_color">@color/indicator_disable_color</item>
+        <item name="main_circle_color">@color/main_circle_color</item>
+        <item name="main_circle_disable_color">@color/main_circle_disable_color
+        </item>
+        <item name="progress_primary_color">@color/progress_primary_color</item>
+        <item name="progress_primary_disable_color">
+            @color/progress_primary_disable_color
+        </item>
+        <item name="progress_secondary_color">@color/progress_secondary_color</item>
+        <item name="progress_secondary_disable_color">
+            @color/progress_secondary_disable_color
+        </item>
+    </style>
+</resources>
