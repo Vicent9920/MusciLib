@@ -75,9 +75,7 @@ public final class FilePlaylistParser implements ParsingLoadable.Parser<HlsPlayl
   /** Exception thrown when merging a delta update fails. */
   public static final class DeltaUpdateException extends IOException {}
 
-//  private static final String key = "”\u0001y)ÜÊ’•CÃF¨@e¸\\";
   public static  String key = "file:///data/user/0/com.lzx.musiclib/files/enc.key";
-  private static final String ivKey = "”\u0001y)ÜÊ’•CÃF¨@e¸\\";
 
   private static final String LOG_TAG = "HlsPlaylistParser";
 

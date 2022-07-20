@@ -34,6 +34,10 @@ class MusicViewModel : ViewModel() {
         arrayJson.forEach<JSONObject> {
             val info = SongInfo()
             info.tag = tag
+            if(it?.has("songUrl") == true){
+                info.songUrl = it.getString("songUrl").orEmpty()
+            }
+
             info.songName = it?.getString("songname").orEmpty()
             info.songId = it?.getString("songmid").orEmpty()
             info.artist = it?.getArray("singer")?.getJSONObject(0)?.getString("name").orEmpty()

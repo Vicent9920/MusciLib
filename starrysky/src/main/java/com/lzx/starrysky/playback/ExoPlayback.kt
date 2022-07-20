@@ -4,15 +4,21 @@ import android.content.Context
 import android.net.Uri
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.AudioAttributes
+import com.google.android.exoplayer2.ext.rtmp.RtmpDataSourceFactory
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
+import com.google.android.exoplayer2.source.rtsp.RtspMediaSource
+import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DataSource
-import com.google.android.exoplayer2.upstream.DefaultDataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.cache.Cache
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
+import com.google.android.exoplayer2.util.Util
 import com.lzx.starrysky.SongInfo
 import com.lzx.starrysky.StarrySky
 import com.lzx.starrysky.cache.ExoCache
@@ -23,6 +29,8 @@ import com.lzx.starrysky.playback.Playback.Companion.STATE_ERROR
 import com.lzx.starrysky.playback.Playback.Companion.STATE_IDLE
 import com.lzx.starrysky.playback.Playback.Companion.STATE_PAUSED
 import com.lzx.starrysky.playback.Playback.Companion.STATE_PLAYING
+import com.lzx.starrysky.utils.isFLAC
+import com.lzx.starrysky.utils.isRTMP
 import com.lzx.starrysky.utils.orDef
 
 
@@ -142,7 +150,7 @@ class ExoPlayback(
             }
         }
         //当错误发生时，如果还播放同一首歌，
-        //这时候需要重新加载一下，并且吧进度 seekTo 到出错的地方
+        //这时候需要重新加载一下，并且把进度 seekTo 到出错的地方
         if (sourceTypeErrorInfo.happenSourceError && !mediaHasChanged) {
             player?.setMediaSource(mediaSource!!)
             player?.prepare()
@@ -180,11 +188,31 @@ class ExoPlayback(
     @Synchronized
     private fun createMediaSource(source: String): MediaSource {
         val uri = Uri.parse(source)
-        val type = C.TYPE_HLS
+        val isRtmpSource = source.isRTMP()
+        val isFlacSource = source.isFLAC()
+        val type = when {
+            isRtmpSource -> TYPE_RTMP
+            isFlacSource -> TYPE_FLAC
+            else -> Util.inferContentType(uri, null)
+
+        }
         dataSourceFactory = buildDataSourceFactory(type)
         return when (type) {
-
-            C.TYPE_HLS -> {
+            C.CONTENT_TYPE_DASH -> {
+                if ("source.dash.DashMediaSource".hasMediaSource()) {
+                    return DashMediaSource.Factory(dataSourceFactory!!).createMediaSource(MediaItem.fromUri(uri))
+                } else {
+                    throw IllegalStateException("has not DashMediaSource")
+                }
+            }
+            C.CONTENT_TYPE_SS -> {
+                if ("source.smoothstreaming.SsMediaSource".hasMediaSource()) {
+                    return SsMediaSource.Factory(dataSourceFactory!!).createMediaSource(MediaItem.fromUri(uri))
+                } else {
+                    throw IllegalStateException("has not SsMediaSource")
+                }
+            }
+            C.CONTENT_TYPE_HLS -> {
                 if ("source.hls.HlsMediaSource".hasMediaSource()) {
                     return HlsMediaSource.Factory(dataSourceFactory!!)
                         .setPlaylistParserFactory(DefaultFilePlaylistParserFactory())
@@ -192,6 +220,29 @@ class ExoPlayback(
                 } else {
                     throw IllegalStateException("has not HlsMediaSource")
                 }
+            }
+            C.TYPE_RTSP -> {
+                if ("source.rtsp.RtspMediaSource".hasMediaSource()) {
+                    return RtspMediaSource.Factory().createMediaSource(MediaItem.fromUri(uri))
+                } else {
+                    throw IllegalStateException("has not RtspMediaSource")
+                }
+            }
+            C.CONTENT_TYPE_OTHER -> {
+                ProgressiveMediaSource.Factory(dataSourceFactory!!).createMediaSource(MediaItem.fromUri(uri))
+            }
+            TYPE_RTMP -> {
+                if ("ext.rtmp.RtmpDataSourceFactory".hasMediaSource()) {
+                    val factory = RtmpDataSourceFactory()
+                    return ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(uri))
+                } else {
+                    throw IllegalStateException("has not RtmpDataSourceFactory")
+                }
+            }
+            TYPE_FLAC -> {
+                val extractorsFactory = DefaultExtractorsFactory()
+                ProgressiveMediaSource.Factory(dataSourceFactory!!, extractorsFactory)
+                    .createMediaSource(MediaItem.fromUri(uri))
             }
             else -> throw IllegalStateException("Unsupported type: $type")
         }
