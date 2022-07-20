@@ -7,29 +7,30 @@ import android.os.Bundle
 import android.view.animation.LinearInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import com.gcssloop.widget.RCImageView
-import com.lzx.musiclib.R
+import com.lzx.musiclib.*
 import com.lzx.musiclib.adapter.addItem
 import com.lzx.musiclib.adapter.itemClicked
 import com.lzx.musiclib.adapter.setText
 import com.lzx.musiclib.adapter.setup
 import com.lzx.musiclib.card.CardActivity
 import com.lzx.musiclib.dynamic.DynamicActivity
-import com.lzx.musiclib.getSelfViewModel
-import com.lzx.musiclib.loadImage
-import com.lzx.musiclib.navigationTo
-import com.lzx.musiclib.showToast
 import com.lzx.musiclib.user.UserInfoActivity
 import com.lzx.musiclib.viewmodel.MusicViewModel
 import com.lzx.starrysky.OnPlayProgressListener
 import com.lzx.starrysky.SongInfo
 import com.lzx.starrysky.StarrySky
+import com.lzx.starrysky.control.RepeatMode
+import com.lzx.starrysky.intercept.InterceptCallback
+import com.lzx.starrysky.intercept.StarrySkyInterceptor
 import com.lzx.starrysky.manager.PlaybackStage
+import com.lzx.starrysky.utils.KtPreferences
 import kotlinx.android.synthetic.main.activity_main.card
 import kotlinx.android.synthetic.main.activity_main.donutProgress
 import kotlinx.android.synthetic.main.activity_main.dynamic
 import kotlinx.android.synthetic.main.activity_main.recycleView
 import kotlinx.android.synthetic.main.activity_main.songCover
 import kotlinx.android.synthetic.main.activity_main.user
+import kotlinx.android.synthetic.main.activity_play_detail.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -55,8 +56,22 @@ class MainActivity : AppCompatActivity() {
             val list = getHomeMusic()
             initRecycleView(list)
         }
+        StarrySky.with().addInterceptor(object : StarrySkyInterceptor(){
+            override fun getTag(): String {
+                return "cache"
+            }
 
-        StarrySky.with().playbackState().observe(this, {
+            override fun process(songInfo: SongInfo?, callback: InterceptCallback) {
+                SpConstant.KEY_CACHE = songInfo?.songId
+                callback.onNext(songInfo)
+            }
+
+
+        })
+        if(SpConstant.KEY_CACHE != null){
+            StarrySky.with().playMusicById(SpConstant.KEY_CACHE!!)
+        }
+        StarrySky.with().playbackState().observe(this) {
             if (it.songInfo?.tag != "home") return@observe
             when (it.stage) {
                 PlaybackStage.PLAYING -> {
@@ -72,7 +87,8 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-        })
+        }
+        StarrySky.with().setRepeatMode(RepeatMode.REPEAT_MODE_NONE, true)
         StarrySky.with().setOnPlayProgressListener(object : OnPlayProgressListener {
             override fun onPlayProgress(currPos: Long, duration: Long) {
                 val info = StarrySky.with().getNowPlayingSongInfo()
@@ -83,6 +99,7 @@ class MainActivity : AppCompatActivity() {
                 donutProgress.setProgress(currPos.toFloat())
             }
         })
+
         songCover?.setOnClickListener {
             StarrySky.with().getNowPlayingSongInfo()?.let {
                 navigationTo<PlayDetailActivity>("songId" to it.songId)

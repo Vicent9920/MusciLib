@@ -4,6 +4,7 @@
       {
         albummid: "003g4JnU23vCjt",
         albumname: "2005 年终舞曲总冠军",
+        songUrl: "https://rw01-sycdn.kuwo.cn/a267ef755fd8ee8429d8b8052568de4c/62d505d2/resource/n2/66/91/3776860486.mp3",
         singer: [
           {
             id: 4884,
@@ -17,6 +18,7 @@
       {
         albummid: "001IPNxq3vvwa8",
         albumname: "Hear My Voice",
+        "songUrl": "http://96.ierge.cn/15/238/476847.mp3",
         singer: [
           {
             id: 265,
@@ -30,6 +32,7 @@
       {
         albummid: "0048pWY92Ex9T4",
         albumname: "无尽的爱",
+        songUrl: "http://96.ierge.cn/15/238/476847.mp3",
         singer: [
           {
             id: 13,
@@ -43,6 +46,7 @@
       {
         albummid: "0024bjiL2aocxT",
         albumname: "十一月的萧邦",
+        songUrl: "http://96.ierge.cn/15/238/476847.mp3",
         singer: [
           {
             id: 4558,
@@ -56,6 +60,7 @@
       {
         albummid: "002gMsEJ3gUI0b",
         albumname: "琦乐无穷",
+        songUrl: "http://96.ierge.cn/15/238/476847.mp3",
         singer: [
           {
             id: 4933,
@@ -69,6 +74,7 @@
       {
         albummid: "0024bjiL2aocxT",
         albumname: "十一月的萧邦",
+        songUrl: "http://96.ierge.cn/15/238/476847.mp3",
         singer: [
           {
             id: 4558,

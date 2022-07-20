@@ -15,7 +15,7 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
-import com.lzx.musiclib.R
+import com.lzx.musiclib.*
 import com.lzx.musiclib.adapter.addItem
 import com.lzx.musiclib.adapter.itemClicked
 import com.lzx.musiclib.adapter.notifyDataSetChanged
@@ -23,10 +23,6 @@ import com.lzx.musiclib.adapter.removedData
 import com.lzx.musiclib.adapter.setText
 import com.lzx.musiclib.adapter.setup
 import com.lzx.musiclib.effect.EffectActivity
-import com.lzx.musiclib.getSelfViewModel
-import com.lzx.musiclib.loadImage
-import com.lzx.musiclib.navigationTo
-import com.lzx.musiclib.showToast
 import com.lzx.musiclib.viewmodel.MusicViewModel
 import com.lzx.musiclib.weight.SpectrumDrawView
 import com.lzx.starrysky.OnPlayProgressListener
@@ -61,6 +57,8 @@ class PlayDetailActivity : AppCompatActivity() {
     private var dialog: MaterialDialog? = null
     private var songInfo: SongInfo? = null
 
+
+
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,7 +73,10 @@ class PlayDetailActivity : AppCompatActivity() {
                 return@getSelfViewModel
             }
             initDetailUI(currSong)
+
         }
+
+
         //进度监听
         StarrySky.with().setOnPlayProgressListener(object : OnPlayProgressListener {
             @SuppressLint("SetTextI18n")
@@ -89,7 +90,7 @@ class PlayDetailActivity : AppCompatActivity() {
             }
         })
         //状态监听
-        StarrySky.with().playbackState().observe(this, { it ->
+        StarrySky.with().playbackState().observe(this) { it ->
             when (it.stage) {
                 PlaybackStage.PLAYING -> {
                     songName?.text = it.songInfo?.songName
@@ -111,7 +112,7 @@ class PlayDetailActivity : AppCompatActivity() {
                     showToast("播放失败：" + it.errorMsg)
                 }
             }
-        })
+        }
         //进度SeekBar
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
