@@ -274,7 +274,7 @@ object StarrySky {
 
     internal fun log(msg: String?) {
         if (isDebug) {
-            Log.i("StarrySky", msg)
+            Log.i("StarrySky", msg?:"")
         }
     }
 
