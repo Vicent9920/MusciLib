@@ -24,6 +24,7 @@ import com.lzx.starrysky.StarrySky
 import com.lzx.starrysky.cache.ExoCache
 import com.lzx.starrysky.cache.ICache
 import com.lzx.starrysky.decrypt.DefaultFilePlaylistParserFactory
+import com.lzx.starrysky.decrypt.FilePlaylistParser
 import com.lzx.starrysky.playback.Playback.Companion.STATE_BUFFERING
 import com.lzx.starrysky.playback.Playback.Companion.STATE_ERROR
 import com.lzx.starrysky.playback.Playback.Companion.STATE_IDLE
@@ -32,6 +33,7 @@ import com.lzx.starrysky.playback.Playback.Companion.STATE_PLAYING
 import com.lzx.starrysky.utils.isFLAC
 import com.lzx.starrysky.utils.isRTMP
 import com.lzx.starrysky.utils.orDef
+import java.io.File
 
 
 /**
@@ -63,6 +65,7 @@ class ExoPlayback(
 
     init {
         focusManager.listener = this
+        FilePlaylistParser.key = "file://${File(context.filesDir,"enc.key").absolutePath}"
     }
 
     override fun playbackState(): Int {
