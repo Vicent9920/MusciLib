@@ -512,12 +512,14 @@ class PlayerControl(
 
     /**
      * 定时停止
-     * time 时间，单位毫秒，传 0 为不开启
-     * isPause 到时间了是否暂停，如果为false，则到时间后会调用stop
-     * isFinishCurrSong 时间到后是否播放完当前歌曲再停
+     * @param time 时间，单位毫秒，传 0 为不开启
+     * @param isPause 到时间了是否暂停，如果为false，则到时间后会调用stop
+     * @param isFinishCurrSong 时间到后是否播放完当前歌曲再停
+     * @author Vincent
+     * @update 允许设置0来停止已开启的定时器
      */
     fun stopByTimedOff(time: Long, isPause: Boolean, isFinishCurrSong: Boolean) {
-        if (time <= 0) {
+        if (time < 0) {
             return
         }
         if (isSkipMediaQueue) {
