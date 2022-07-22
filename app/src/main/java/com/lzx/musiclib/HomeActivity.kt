@@ -1,17 +1,13 @@
 package com.lzx.musiclib
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.lzx.musiclib.home.MainActivity
 import com.lzx.musiclib.home.TestActivity
 import com.lzx.starrysky.StarrySky
-import com.lzx.starrysky.decrypt.FilePlaylistParser
 import kotlinx.android.synthetic.main.activity_home.btn1
 import kotlinx.android.synthetic.main.activity_home.btn2
-import java.io.File
 
-private const val TAG = "HomeActivity"
 class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
