@@ -19,7 +19,7 @@ class HomeActivity : AppCompatActivity() {
         btn1.setOnClickListener { navigationTo<TestActivity>() }
         btn2.setOnClickListener { navigationTo<MainActivity>() }
         File(this.filesDir,"enc.key").writeBytes(byteArrayOf(-108,1,121,41,-36,-54,-110,-107,67,-61,70,-88,64,101,-72,92))
-        FilePlaylistParser.key = "file://${File(this.filesDir,"enc.key").absolutePath}"
+
         Log.e(TAG,"密钥填充完毕")
     }
 }
