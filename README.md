@@ -1,4 +1,4 @@
-# A Powerful and Streamline MusicLibrary
+# The a Powerful and Streamline MusicLibrary
 
 [ ![](https://img.shields.io/badge/platform-android-green.svg) ](http://developer.android.com/index.html)
 [![](https://jitpack.io/v/EspoirX/StarrySky.svg)](https://jitpack.io/#EspoirX/StarrySky)
